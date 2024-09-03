@@ -36,7 +36,7 @@ private:
                             0xE0, 0x90, 0x90, 0x90, 0xE0, // D
                             0xF0, 0x80, 0xF0, 0x80, 0xF0, // E
                             0xF0, 0x80, 0xF0, 0x80, 0x80 }; // F
-    int8_t registers[16];
+    uint8_t registers[16];
     bool keys[16];
     uint16_t ProgramCounter;
     uint16_t I;
@@ -46,12 +46,12 @@ private:
 
     uint16_t instruction;
 
-    int8_t OPCODE;
-    int16_t NNN;
-    int8_t X;
-    int8_t NN;
-    int8_t Y;
-    int8_t N;
+    uint8_t OPCODE;
+    uint16_t NNN;
+    uint8_t X;
+    uint8_t NN;
+    uint8_t Y;
+    uint8_t N;
 
 
     //software stuff

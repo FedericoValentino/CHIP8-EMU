@@ -26,6 +26,7 @@ void Processor::decode() {
 void Processor::execute() {
 
     bool pressed = false;
+    uint8_t tester = 0u;
     switch(OPCODE)
     {
         case 0x0:
@@ -89,23 +90,53 @@ void Processor::execute() {
                     registers[X] ^= registers[Y];
                     break;
                 case 0x4:
+                    tester = registers[X];
                     registers[X] += registers[Y];
+                    if(tester > registers[X])
+                        registers[0xF] = 0x1;
+                    else
+                        registers[0xF] = 0x0;
                     break;
                 case 0x5:
+                    tester = registers[X];
                     registers[X] -= registers[Y];
+                    if(tester < registers[Y])
+                    {
+                        registers[0xF] = 0x0;
+                    }
+                    else
+                    {
+                        registers[0xF] = 0x1;
+                    }
+
+
                     break;
                 case 0x6:
                     registers[X] = registers[Y];
-                    registers[0xF] = registers[X] & 0x1;
+                    tester = registers[X] & 0x1;
                     registers[X] = registers[X] >> 1;
+                    registers[0xF] = tester;
                     break;
                 case 0x7:
+                    tester = registers[X];
                     registers[X] = registers[Y] - registers[X];
+
+                    if(tester > registers[Y])
+                    {
+                        registers[0xF] = 0x0;
+                    }
+                    else
+                    {
+                        registers[0xF] = 0x1;
+                    }
+
+
                     break;
                 case 0xE:
                     registers[X] = registers[Y];
-                    registers[0xF] = (registers[X] >> 15) & 0x1;
+                    tester = (registers[X] & 0x80) >> 7;
                     registers[X] = registers[X] << 1;
+                    registers[0xF] = tester;
                     break;
             }
             break;
@@ -200,6 +231,9 @@ void Processor::run() {
     static auto startTime = std::chrono::high_resolution_clock::now();
     float lastTime = 0;
     float accumulator = 0;
+    float timerAccumulator = 0;
+    float timerthreshold = 1.0f/60.0f;
+    float clockthreshold = 1.0f/4000.0f;
 
 
 
@@ -212,10 +246,117 @@ void Processor::run() {
         //Handle events on queue
         while( SDL_PollEvent(&e) != 0 )
         {
-            //User requests quit
-            if(e.type == SDL_QUIT )
+            switch(e.type)
             {
-                quit = true;
+                case SDL_QUIT:
+                    quit = true;
+                    break;
+                case SDL_KEYDOWN:
+                    switch(e.key.keysym.sym)
+                    {
+                        case SDLK_1:
+                            keys[0x1] = true;
+                            break;
+                        case SDLK_2 :
+                            keys[0x2] = true;
+                            break;
+                        case SDLK_3 :
+                            keys[0x3] = true;
+                            break;
+                        case SDLK_4 :
+                            keys[0xC] = true;
+                            break;
+                        case SDLK_q :
+                            keys[0x4] = true;
+                            break;
+                        case SDLK_w :
+                            keys[0x5] = true;
+                            break;
+                        case SDLK_e :
+                            keys[0x6] = true;
+                            break;
+                        case SDLK_r :
+                            keys[0xD] = true;
+                            break;
+                        case SDLK_a :
+                            keys[0x7] = true;
+                            break;
+                        case SDLK_s :
+                            keys[0x8] = true;
+                            break;
+                        case SDLK_d :
+                            keys[0x9] = true;
+                            break;
+                        case SDLK_f :
+                            keys[0xE] = true;
+                            break;
+                        case SDLK_z :
+                            keys[0xA] = true;
+                            break;
+                        case SDLK_x :
+                            keys[0x0] = true;
+                            break;
+                        case SDLK_c :
+                            keys[0xB] = true;
+                            break;
+                        case SDLK_v :
+                            keys[0xF] = true;
+                            break;
+                    }
+                    break;
+                case SDL_KEYUP:
+                    switch(e.key.keysym.sym)
+                    {
+                        case SDLK_1:
+                            keys[0x1] = false;
+                            break;
+                        case SDLK_2 :
+                            keys[0x2] = false;
+                            break;
+                        case SDLK_3 :
+                            keys[0x3] = false;
+                            break;
+                        case SDLK_4 :
+                            keys[0xC] = false;
+                            break;
+                        case SDLK_q :
+                            keys[0x4] = false;
+                            break;
+                        case SDLK_w :
+                            keys[0x5] = false;
+                            break;
+                        case SDLK_e :
+                            keys[0x6] = false;
+                            break;
+                        case SDLK_r :
+                            keys[0xD] = false;
+                            break;
+                        case SDLK_a :
+                            keys[0x7] = false;
+                            break;
+                        case SDLK_s :
+                            keys[0x8] = false;
+                            break;
+                        case SDLK_d :
+                            keys[0x9] = false;
+                            break;
+                        case SDLK_f :
+                            keys[0xE] = false;
+                            break;
+                        case SDLK_z :
+                            keys[0xA] = false;
+                            break;
+                        case SDLK_x :
+                            keys[0x0] = false;
+                            break;
+                        case SDLK_c :
+                            keys[0xB] = false;
+                            break;
+                        case SDLK_v :
+                            keys[0xF] = false;
+                            break;
+                    }
+                    break;
             }
         }
         auto currentTime = std::chrono::high_resolution_clock::now();
@@ -223,8 +364,18 @@ void Processor::run() {
         auto deltaT = time - lastTime;
         lastTime = time;
         accumulator += deltaT;
+        timerAccumulator += deltaT;
 
-        if(accumulator > 0.01f)
+        if(timerAccumulator > timerthreshold)
+        {
+            timerAccumulator = 0;
+            if(delayTimer > 0)
+                delayTimer--;
+            if(soundTimer > 0)
+                soundTimer--;
+        }
+
+        if(accumulator > clockthreshold)
         {
             accumulator = 0.0f;
             switch (this->stage)
@@ -259,14 +410,14 @@ void Processor::drawProcedure()
             {
                 bool mostSignificant = (spriteData >> (7 - j)) & 0x1;
                 if (mostSignificant) {
-                    registers[0xF] = CHIP8_Screen->getDisplayStatus(realY * 64 + realX);
+                    registers[0xF] = CHIP8_Screen->getDisplayStatus(realY * 64 + realX + j);
                     CHIP8_Screen->displayFlip(realY * 64 + realX + j);
+                    CHIP8_Screen->draw();
                 }
             }
         }
         realY++;
     }
-    CHIP8_Screen->draw();
 }
 
 Processor::Processor() {
@@ -281,7 +432,7 @@ void Processor::loadRom(FILE* file) {
         uint8_t instruction;
         fread(&instruction, sizeof(unsigned char), 1, file);
         memory[0x200+count] = instruction;
-        //printf("%x\n", instruction);
+        printf("%x\n", instruction);
         count++;
     }
 
