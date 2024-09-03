@@ -6,8 +6,8 @@
 
 #include <SDL.h>
 
-constexpr uint32_t SCREEN_WIDTH = 640;
-constexpr uint32_t SCREEN_HEIGHT = 320;
+constexpr uint32_t SCREEN_WIDTH = 1280;
+constexpr uint32_t SCREEN_HEIGHT = 640;
 constexpr uint32_t CHIP8Y = 32;
 constexpr uint32_t CHIP8X = 64;
 
